@@ -30,9 +30,11 @@ def plan(csv_profile: dict, fallback: list[dict], goal: str) -> dict:
             if item.operation not in {"trim","normalize_category","drop_duplicates"}: continue
             if item.operation != "drop_duplicates" and item.column not in permitted: continue
             proposals.append({"issueId":f"gemini-{i}","title":item.title[:120],"reason":item.reason[:500],"risk":"medium", "operation":{"operation":item.operation,"column":item.column,"parameters":{}},"source":"gemini"})
-        return {"mode":"gemini", "notice":"AI plans require user approval and deterministic validation", "proposals": proposals or fallback}
-    except Exception as exc:
-        return {"mode":"rules", "notice":f"Gemini unavailable: {str(exc)[:120]}. Showing rules-based suggestions.", "proposals":fallback}
+        if proposals:
+            return {"mode":"gemini", "notice":"AI plans require user approval and deterministic validation", "proposals": proposals}
+        return {"mode":"rules", "notice":"Gemini returned no valid proposals; deterministic suggestions are shown", "proposals":fallback}
+    except Exception:
+        return {"mode":"rules", "notice":"Gemini unavailable; deterministic suggestions are shown", "proposals":fallback}
 
 def recommend_chart(profile: dict, goal: str) -> dict:
     columns = profile["columns"]
