@@ -7,7 +7,6 @@ export async function POST(request:NextRequest){
   try{
     const body=await request.json();
     if(!allowed.has(body.action)||typeof body.csv!=='string'||body.csv.length>100_000)throw new Error('Invalid public demo request');
-    // Public demo is intentionally rules-only. It never calls paid Gemini.
     const action=body.action as ProcessorAction;
     if(action==='chart-advisor'){
       const profile=await processDataset('profile',body.csv,{goal:body.goal||''});
@@ -18,7 +17,7 @@ export async function POST(request:NextRequest){
     if(action==='suggest'){
       const profile=await processDataset('profile',body.csv,{goal:body.goal||''});
       const proposals=profile.issues.flatMap((i:{kind:string;column:string|null;id:string})=>i.kind==='inconsistent_category'?[{issueId:i.id,title:'Standardize category labels',reason:'Normalize case and whitespace',risk:'medium',operation:{operation:'normalize_category',column:i.column,parameters:{}},source:'rules'}]:i.kind==='exact_duplicate'?[{issueId:i.id,title:'Remove exact duplicates',reason:'Review identical rows before removal',risk:'medium',operation:{operation:'drop_duplicates',column:null,parameters:{}},source:'rules'}]:[]);
-      return NextResponse.json({mode:'rules',notice:'Rule-based demo; connect Gemini for AI plans',proposals});
+      return NextResponse.json({mode:'rules',notice:'Rule-based demo; connect NVIDIA for AI plans',proposals});
     }
     const result=await processDataset(action,body.csv,{goal:body.goal||'',operations:body.operations||[],rules:body.rules||[],spec:body.spec,newCsv:body.newCsv});
     return NextResponse.json(result);

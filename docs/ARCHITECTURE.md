@@ -9,11 +9,11 @@ flowchart TD
   W -->|Cloudinary signed server access| C[(Cloudinary raw / authenticated CSV)]
   W -->|X-Processor-Token, dataset content| P[FastAPI on separate Vercel service]
   P --> E[pandas deterministic repair and chart engine]
-  P --> A[Gemini structured proposals, optional]
+  P --> A[NVIDIA structured proposals, optional]
   E -->|safe calculations, diffs, checks| W
 ```
 
-The browser must never receive `PROCESSOR_SERVICE_TOKEN`, `GEMINI_API_KEY`, Cloudinary API secret, or Better Auth signing secret. FastAPI is stateless and is not the authorization authority; Next.js enforces authenticated dataset ownership before every private processor request.
+The browser must never receive `PROCESSOR_SERVICE_TOKEN`, `NVIDIA_API_KEY`, Cloudinary API secret, or Better Auth signing secret. FastAPI is stateless and is not the authorization authority; Next.js enforces authenticated dataset ownership before every private processor request.
 
 ## Main data model
 
@@ -32,9 +32,9 @@ No CSV cells are stored as database rows. Full CSV snapshots are retained in aut
 
 **Diagnosis:** Next.js downloads the active CSV (server-side) -> FastAPI `profile` -> pandas string-preserving parse -> missing, duplicate, mixed-type, category, negative-value checks -> issue priorities based on user's goal.
 
-**Repair:** Gemini or deterministic fallback proposes only whitelisted operations -> user queues proposals -> FastAPI applies to an isolated in-memory dataframe -> exact row/cell diffs, aggregate impact, data-rule checks -> user approves -> a new Cloudinary object and immutable version -> transactional compare-and-swap of `currentVersionId` to prevent stale edits.
+**Repair:** NVIDIA or deterministic fallback proposes only whitelisted operations -> user queues proposals -> FastAPI applies to an isolated in-memory dataframe -> exact row/cell diffs, aggregate impact, data-rule checks -> user approves -> a new Cloudinary object and immutable version -> transactional compare-and-swap of `currentVersionId` to prevent stale edits.
 
-**Visualization:** Gemini may provide chart-spec JSON; API validates chart type/columns/filter and pandas calculates values and stable within-version row selectors. Plotly displays data. Clicking bars or points sends selectors back to authorized processor queries to load source rows.
+**Visualization:** NVIDIA may provide chart-spec JSON; API validates chart type/columns/filter and pandas calculates values and stable within-version row selectors. Plotly displays data. Clicking bars or points sends selectors back to authorized processor queries to load source rows.
 
 **Export:** CSV is the approved active snapshot. Audit JSON contains approved events and version hashes. Python script reproduces the cumulative approved recipe; the processor executes a fixed generated script against the original CSV in a bounded subprocess and rejects it unless its output exactly matches the deterministic engine result.
 
@@ -58,7 +58,7 @@ No CSV cells are stored as database rows. Full CSV snapshots are retained in aut
 
 ## Deployment
 
-One repository, two Vercel projects. The web app root is `.` and processing service root is `services/processor/`. Database/Cloudinary credentials are required for persistent saved data. Gemini, Google OAuth, and email are optional; the UI must label deterministic fallbacks accurately. See `SETUP_GUIDE.md` and `TEST_REPORT.md`.
+One repository, two Vercel projects. The web app root is `.` and processing service root is `services/processor/`. Database/Cloudinary credentials are required for persistent saved data. NVIDIA, Google OAuth, and email are optional; the UI must label deterministic fallbacks accurately. See `SETUP_GUIDE.md` and `TEST_REPORT.md`.
 
 
 ## Authentication scope decision
