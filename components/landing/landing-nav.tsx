@@ -17,7 +17,7 @@ export function LandingNav() {
       <nav className="land-nav" aria-label="Main navigation">
         <a href="/#product">Product</a>
         <a href="/#flow">Features</a>
-        <Link href="/demo">Resources</Link>
+        <Link href="/#exports">Exports</Link>
         <Link href="/pricing">Pricing</Link>
       </nav>
       <div className="land-header-actions">
@@ -30,7 +30,7 @@ export function LandingNav() {
       <nav id="landing-mobile-nav" className={`land-mobile-nav${open ? ' is-open' : ''}`} aria-label="Mobile navigation" inert={!open}>
         <a href="/#product" onClick={() => setOpen(false)}>Product</a>
         <a href="/#flow" onClick={() => setOpen(false)}>Features</a>
-        <Link href="/demo" onClick={() => setOpen(false)}>Resources</Link>
+        <Link href="/#exports" onClick={() => setOpen(false)}>Exports</Link>
         <Link href="/pricing" onClick={() => setOpen(false)}>Pricing</Link>
         <Link href="/sign-in" onClick={() => setOpen(false)}>Log in</Link>
         <Link className="button-dark" href="/sign-up" onClick={() => setOpen(false)}>Start Exploring <ArrowRight size={16} /></Link>

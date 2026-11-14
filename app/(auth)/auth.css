@@ -1,0 +1,101 @@
+.auth-scene {
+  --line: #d6cfc6;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0,1fr);
+  background: #f6f2ed url('/images/auth-architecture.webp') center / 100% 100% no-repeat;
+  color: #201e1b;
+}
+.auth-top { display: flex; align-items: center; justify-content: space-between; min-height: clamp(58px,9vh,76px); padding: 8px clamp(20px,5vw,90px); border-bottom: 1px solid var(--line); }
+.return-link { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 13px; font-weight: 500; color: #5e5851; letter-spacing: -.02em; }
+.auth-columns { width: min(100%,1440px); margin-inline: auto; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+.auth-story { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 0; padding: 2vh clamp(28px,4vw,64px); }
+.story-title,.access-card h1 { font-weight: 500; letter-spacing: -.065em; line-height: 1.04; }
+.story-title { font-size: clamp(36px,min(4.4vw,7vh),66px); }
+.story-title em { color: #df4c0e; }
+.auth-sculpture { width: 100%; height: min(58dvh,640px); min-height: 0; perspective: 1100px; align-self: center; margin-top: clamp(14px,3vh,35px); }
+.auth-sculpture img { display: block; width: 100%; height: 100%; object-fit: contain; }
+@media (prefers-reduced-motion: no-preference) {
+  .auth-sculpture img {
+    animation: sculpture-float 6s ease-in-out infinite alternate;
+    transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transition: transform 420ms ease-out;
+  }
+}
+@keyframes sculpture-float {
+  from { translate: 0 2px; }
+  to { translate: 0 -6px; }
+}
+.auth-panel { display: flex; min-width: 0; min-height: 0; overflow-y: auto; padding: clamp(16px,4vh,44px) clamp(24px,5vw,76px); }
+.access-card {
+  --card-pad: clamp(20px, 3.5vw, 52px);
+  --card-radius: clamp(25px, 3.2vw, 44px);
+  isolation: isolate;
+  position: relative;
+  width: min(100%, calc(340px + 2 * var(--card-pad)));
+  margin: auto;
+  padding: clamp(20px, 3vh, 32px) var(--card-pad);
+  border-radius: var(--card-radius);
+  box-shadow: 0 22px 44px -27px #5b362073, 0 4px 9px -6px #4f302244;
+}
+.access-card::before,
+.access-card::after { content: ''; position: absolute; pointer-events: none; }
+.access-card::before {
+  z-index: -2;
+  inset: calc(-.55 * var(--card-radius)) 0 42% 50%;
+  border-radius: var(--card-radius) var(--card-radius) 0 0;
+  background: linear-gradient(110deg,#fe7d13,#e65a0b 54%,#b63c07);
+}
+.access-card::after {
+  z-index: -1;
+  inset: 0;
+  border: 1px solid #fffcf7;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #fcf7f3 5%, #f6ece6 55%, #f2e6df);
+  box-shadow: inset 0 1px 3px #ffffffbd, inset 0 -1px 2px #dfcfc485;
+}
+.access-card h1 { font-size: clamp(29px,2.5vw,36px); margin: 0 0 clamp(18px,2.6vh,25px); }
+.access-field { margin-bottom: clamp(10px,1.8vh,16px); }
+.access-field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.access-field > div { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #bfb7ae; }
+.access-field input { min-width: 0; width: 100%; height: 38px; font-size: 16px; border: 0; background: transparent; }
+.access-field > div:focus-within { border-bottom-color: #b6400b; box-shadow: 0 1px #b6400b; }
+.access-field input:focus-visible { outline: none; }
+.access-field svg,.access-submit svg { width: 17px; height: 17px; flex: none; stroke-width: 1.6; }
+.return-link:hover { color: #211f1c; text-decoration: underline; text-underline-offset: 4px; }
+.access-field button { background: transparent; border: 0; display: grid; place-items: center; width: 32px; height: 40px; }
+.remember-choice { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.remember-choice input { width: 15px; height: 15px; accent-color: #25221e; }
+.access-submit,.access-google { display: flex; width: 100%; align-items: center; justify-content: center; min-height: 40px; gap: 10px; border-radius: 24px; font-size: 14px; font-weight: 550; }
+.access-submit { background: #211f1c; color: #fff; border: 0; margin-top: 14px; }
+.access-submit:hover { background: #39352f; }
+.access-submit:disabled { opacity: .65; }
+.access-google { border: 1px solid var(--line); background: transparent; }
+.access-google:hover { background: #ede8e1; }
+.access-divider { display: flex; align-items: center; gap: 12px; margin: 12px 0; color: #645e57; font-size: 12px; }
+.access-divider::before,.access-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.access-other { text-align: center; margin-top: 18px; font-size: 14px; }
+.access-other a { color: #a83b0d; margin-left: 4px; }
+@media(max-width:760px) {
+  .auth-columns { grid-template-columns: 1fr; }
+  .auth-story { display: none; }
+  .auth-panel { padding-inline: clamp(20px,6vw,36px); }
+}
+@media(max-height:600px) {
+  .auth-top { min-height: 48px; }
+  .auth-panel { padding-block: 10px; }
+  .access-card { padding-block: 12px; --card-radius: 18px; }
+  .access-card h1 { font-size: 30px; margin-bottom: 12px; }
+  .access-field { margin-bottom: 8px; }
+  .access-divider,.access-other { margin-block: 8px; }
+}
+@media (max-height:480px) and (min-width:600px) {
+  .auth-story { display: none; }
+  .auth-columns { display: block; }
+  .auth-panel { height: 100%; }
+  .access-card { width: min(100%,690px); display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); column-gap: 32px; align-items: start; }
+  .access-card h1,.access-google,.access-other { grid-column: 1; }
+  .access-card form { grid-column: 2; grid-row: 1 / 5; }
+  .access-divider { display: none; }
+}

@@ -11,13 +11,12 @@ def plan(csv_profile: dict, fallback: list[dict], goal: str) -> dict:
         return {"mode":"rules", "notice":"Gemini key not set; deterministic suggestions are shown", "proposals":fallback}
     try:
         from google import genai
-        from pydantic import BaseModel, Field
+        from pydantic import BaseModel
         class Proposal(BaseModel):
             title: str
             reason: str
             operation: str
             column: str | None = None
-            parameters: dict[str, str] = Field(default_factory=dict)
         class Response(BaseModel):
             proposals: list[Proposal]
         client = genai.Client(api_key=key)
