@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import Image from 'next/image';
+export default function AuthLayout({children}:{children:React.ReactNode}){return <div className="auth-layout"><aside className="auth-showcase"><Link href="/" className="rv-brand"><span className="rv-brand-mark"><i/><i/></span>Rowvitra</Link><h1>Good data.<br/><em>Better</em><br/>decisions.</h1><p>Clean the noise, understand every change, and see your insights take shape.</p><Image src="/images/hero-art.webp" width={750} height={570} alt="Sculptural data abstraction" priority/></aside><div className="auth-form-side"><Link href="/" className="auth-home">← Back to homepage</Link>{children}<p className="small subtle" style={{alignSelf:'center'}}>© Rowvitra. Designed for data clarity</p></div></div>}

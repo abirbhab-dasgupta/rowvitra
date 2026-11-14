@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import {WorkspaceClient} from '@/components/workspace/workspace-client';
+export default function Page(){if(process.env.ENABLE_PUBLIC_DEMO!=='true')return <main style={{maxWidth:650,margin:'10vh auto',padding:30}}><Link href="/" className="rv-brand"><span className="rv-brand-mark"><i/><i/></span>Rowvitra</Link><h1 className="page-title" style={{marginTop:70}}>Demo is disabled.</h1><p className="subtle">Enable ENABLE_PUBLIC_DEMO=true in your local .env.local to try the sample workspace, or sign in to use your own datasets.</p><Link href="/sign-in" className="button-dark" style={{marginTop:25}}>Sign in →</Link></main>;return <WorkspaceClient demo/>}

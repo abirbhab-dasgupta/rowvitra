@@ -1,0 +1,12 @@
+export type DataRow = {__rv_row_id:string;[key:string]:string};
+export type DataIssue={id:string;kind:string;column:string|null;count:number;severity:string;description:string;priority:number;goalRelevant:boolean;rowIds:string[]};
+export type ColumnProfile={name:string;type:string;protected:boolean;missing:number;unique:number;examples:string[]};
+export type DataProfile={rowCount:number;columnCount:number;missingCells:number;duplicateRows:number;protectedColumns:string[];healthScore:number;issues:DataIssue[];columns:ColumnProfile[];preview:DataRow[];goal:string};
+export type Operation={operation:string;column?:string|null;parameters?:Record<string,unknown>};
+export type Proposal={issueId:string;title:string;reason:string;risk:string;operation:Operation;source:string};
+export type Preview={csv:string;diff:{changes:{rowId:string;column:string;before:string;after:string}[];totalCellChanges:number;removedRowCount:number;removedRowIds:string[];truncated:boolean};before:{rowCount:number;columnCount:number;numeric:Record<string,Record<string,number>>};after:{rowCount:number;columnCount:number;numeric:Record<string,Record<string,number>>};valid:boolean;rules:{rule:Rule;count:number;passed:boolean}[];previewRows:DataRow[]};
+export type ChartSpec={type:string;x:string;y:string;aggregation:string;title:string};
+export type ChartPoint={x:string|number;y?:number;rowIds:string[]};
+export type ChartResult={type:string;title:string;xLabel?:string;yLabel?:string;points?:ChartPoint[];labels?:string[];matrix?:number[][]};
+export type Rule={type:string;column:string;min?:number;max?:number;values?:string[]};
+export type Version={id:string;createdAt:string;parentVersionId?:string|null;operations:Operation[]};

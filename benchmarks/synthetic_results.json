@@ -1,0 +1,56 @@
+{
+  "datasetOrigin": "five synthetic seeded fixtures, not public datasets",
+  "aiEvaluated": false,
+  "detected": 5,
+  "total": 5,
+  "attemptedRepairs": 2,
+  "correctRepairs": 2,
+  "abstained": 3,
+  "cases": [
+    {
+      "case": "category_case",
+      "expectedIssue": "inconsistent_category",
+      "detected": true,
+      "repairAttempted": true,
+      "repairCorrect": true,
+      "healthyCellDamageUpperBound": 0,
+      "elapsedMs": 14.06
+    },
+    {
+      "case": "duplicate_row",
+      "expectedIssue": "exact_duplicate",
+      "detected": true,
+      "repairAttempted": true,
+      "repairCorrect": true,
+      "healthyCellDamageUpperBound": 0,
+      "elapsedMs": 9.11
+    },
+    {
+      "case": "missing_value",
+      "expectedIssue": "missing",
+      "detected": true,
+      "repairAttempted": false,
+      "repairCorrect": null,
+      "healthyCellDamageUpperBound": null,
+      "elapsedMs": 3.46
+    },
+    {
+      "case": "mixed_numeric",
+      "expectedIssue": "mixed_types",
+      "detected": true,
+      "repairAttempted": false,
+      "repairCorrect": null,
+      "healthyCellDamageUpperBound": null,
+      "elapsedMs": 3.31
+    },
+    {
+      "case": "negative_age",
+      "expectedIssue": "negative_value",
+      "detected": true,
+      "repairAttempted": false,
+      "repairCorrect": null,
+      "healthyCellDamageUpperBound": null,
+      "elapsedMs": 3.28
+    }
+  ]
+}
