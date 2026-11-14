@@ -15,8 +15,8 @@ export function LandingNav() {
     <header className="land-header">
       <Link href="/" className="rv-brand" aria-label="Rowvitra home"><span className="rv-brand-mark" aria-hidden="true"><i /><i /></span>Rowvitra</Link>
       <nav className="land-nav" aria-label="Main navigation">
-        <a href="/#product">Product</a>
-        <a href="/#flow">Features</a>
+        <Link href="/#product">Product</Link>
+        <Link href="/#flow">Features</Link>
         <Link href="/#exports">Exports</Link>
         <Link href="/pricing">Pricing</Link>
       </nav>
@@ -28,8 +28,8 @@ export function LandingNav() {
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
       <nav id="landing-mobile-nav" className={`land-mobile-nav${open ? ' is-open' : ''}`} aria-label="Mobile navigation" inert={!open}>
-        <a href="/#product" onClick={() => setOpen(false)}>Product</a>
-        <a href="/#flow" onClick={() => setOpen(false)}>Features</a>
+        <Link href="/#product" onClick={() => setOpen(false)}>Product</Link>
+        <Link href="/#flow" onClick={() => setOpen(false)}>Features</Link>
         <Link href="/#exports" onClick={() => setOpen(false)}>Exports</Link>
         <Link href="/pricing" onClick={() => setOpen(false)}>Pricing</Link>
         <Link href="/sign-in" onClick={() => setOpen(false)}>Log in</Link>

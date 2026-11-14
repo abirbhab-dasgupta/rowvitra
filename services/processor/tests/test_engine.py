@@ -80,7 +80,7 @@ def test_replay_python_script_produces_identical_csv():
     with tempfile.TemporaryDirectory() as tmp:
         p=Path(tmp)
         (p/"original.csv").write_text(original)
-        (p/"clean.py").write_text(generate_script(ops))
+        (p/"clean.py").write_text(generate_script(ops), encoding="utf-8")
         completed=subprocess.run([sys.executable,str(p/"clean.py"),str(p/"original.csv"),str(p/"out.csv")],capture_output=True,text=True)
         assert completed.returncode == 0,completed.stderr
         assert (p/"out.csv").read_text() == expected
@@ -172,7 +172,7 @@ def test_checkpoint_allows_replay_of_manual_edits_after_row_deletion():
     with tempfile.TemporaryDirectory() as folder:
         p=Path(folder)
         (p/"original.csv").write_text(original)
-        (p/"replay.py").write_text(generate_script(cumulative))
+        (p/"replay.py").write_text(generate_script(cumulative), encoding="utf-8")
         run=subprocess.run([sys.executable,str(p/"replay.py"),str(p/"original.csv"),str(p/"new.csv")],capture_output=True,text=True)
         assert run.returncode == 0, run.stderr
         assert (p/"new.csv").read_text() == version_two

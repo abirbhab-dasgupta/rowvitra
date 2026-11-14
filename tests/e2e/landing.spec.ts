@@ -11,7 +11,7 @@ test('landing page preserves the visual identity and navigation', async ({ page 
 test('email authentication forms are accessible', async ({ page }) => {
   await page.goto('/sign-up');
   await expect(page.getByLabel('Email address')).toBeVisible();
-  await expect(page.getByLabel('Password')).toBeVisible();
+  await expect(page.getByLabel('Password', {exact:true})).toBeVisible();
   await expect(page.getByRole('button', { name: /Create account/ })).toBeVisible();
   await page.goto('/sign-in');
   await expect(page.getByRole('button', { name: /Continue with Google/ })).toBeVisible();

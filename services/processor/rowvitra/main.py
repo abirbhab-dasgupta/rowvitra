@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 from .engine import DataError, MAX_RECIPE_OPERATIONS, parse_csv, get_profile, preview, chart_query, check_rules, generate_script, verify_export_script, get_rows, replay_recipe, suggest_repairs
+from .decision import simulate, DecisionSpec
 from .ai import plan, recommend_chart
 
 app = FastAPI(title="Rowvitra Processor", version="1.0.0", docs_url=None if os.getenv("VERCEL") else "/docs")
@@ -105,3 +106,32 @@ def script(body: RecipeRequest):
         script_text, verified = verify_export_script(body.csv, body.operations)
         return {"script":script_text, "replayVerified":verified}
     except (DataError, TypeError, ValueError) as exc: raise HTTPException(422, detail=str(exc))
+
+
+class DecisionRequest(RecipeRequest):
+    originalCsv: str = Field(max_length=1_500_000)
+    spec: DecisionSpec
+
+
+@app.post("/v1/decision", dependencies=[Depends(authenticated)])
+def decision(body: DecisionRequest):
+    try:
+        return simulate(parse_csv(body.originalCsv), parse_csv(body.csv), body.operations, body.spec)
+    except DataError as exc:
+        raise HTTPException(422, detail=str(exc))
+
+
+class DecisionQuestion(CSVRequest):
+    question: str = Field(min_length=1, max_length=240)
+
+
+@app.post("/v1/decision-question", dependencies=[Depends(authenticated)])
+def decision_question(body: DecisionQuestion):
+    from .ai import interpret_decision
+    try:
+        columns = get_profile(parse_csv(body.csv))["columns"]
+        return interpret_decision(body.question, columns)
+    except DataError as exc:
+        raise HTTPException(422, detail=str(exc))
+    except Exception:
+        raise HTTPException(503, detail="Question interpretation unavailable. Choose settings manually.")

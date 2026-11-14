@@ -300,3 +300,15 @@ body { font-family: Arial, Helvetica, sans-serif; }
   .charts-fields { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
 }
 @media(max-width:380px) { .charts-fields { grid-template-columns: minmax(0,1fr); } }
+
+.decision-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr));gap:14px;border:0;padding:0;margin:20px 0}
+.decision-fields label{display:grid;gap:6px;font-size:.8rem;font-weight:600}
+.decision-tools details{margin:14px 0;font-size:.85rem}
+.decision-tools summary{cursor:pointer;font-weight:600}
+.decision-tools details ul{padding-left:1.2rem;list-style:disc;line-height:1.6}
+.decision-tools .data-table-wrap{margin:12px 0}
+.decision-tools .panel{min-width:0}
+
+.decision-comparison { margin: 16px 0; min-width: 0; }
+.decision-comparison figcaption { margin-bottom: 6px; font-weight: 700; overflow-wrap: anywhere; }
+.comparison-scroll { max-width: 100%; overflow-x: auto; }

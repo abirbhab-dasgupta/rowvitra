@@ -145,7 +145,7 @@ The actual AI requests run from Python, **not** from the Next.js browser or Next
 
 ```dotenv
 GEMINI_API_KEY=your_real_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-flash-lite-latest
 ```
 
 The main/root `.env.example` mentions Gemini for reference, but putting the key only in `.env.local` **does not configure the Python service**. Never prefix the Gemini key with `NEXT_PUBLIC_`.
@@ -202,7 +202,7 @@ Edit **`services/processor/.env`**:
 ```dotenv
 PROCESSOR_SERVICE_TOKEN=paste_the_same_second_secret_used_by_nextjs
 GEMINI_API_KEY=your_real_gemini_api_key
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-flash-lite-latest
 ```
 
 Start the backend **from `services/processor/`**:
@@ -243,7 +243,7 @@ GOOGLE_CLIENT_SECRET=
 
 # Reference only: set the actual key in services/processor/.env
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-flash-lite-latest
 ```
 
 Then run:
@@ -331,7 +331,7 @@ Push the `rowvitra/` project to GitHub, including the generated `package-lock.js
    ```dotenv
    PROCESSOR_SERVICE_TOKEN=the_exact_secret_used_in_web
    GEMINI_API_KEY=your_real_key
-   GEMINI_MODEL=gemini-2.5-flash
+   GEMINI_MODEL=gemini-flash-lite-latest
    ```
 
 5. Deploy, and open `https://YOUR-PROCESSOR.vercel.app/health`.

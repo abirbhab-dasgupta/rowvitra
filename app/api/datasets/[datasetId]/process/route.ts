@@ -7,7 +7,7 @@ import {uploadCSV,deleteCSV,downloadCSV,csvHash} from '@/lib/storage';
 import {processDataset,ProcessorAction} from '@/lib/processor';
 import {issuePreviewApproval,verifyPreviewApproval} from '@/lib/preview-approval';
 export const runtime='nodejs';
-const ACTIONS=new Set(['profile','suggest','chart-advisor','replay','impact-chart','preview','chart','rules','script','rows','commit','save-chart','save-rule','delete-rule']);
+const ACTIONS=new Set(['decision-question','decision','profile','suggest','chart-advisor','replay','impact-chart','preview','chart','rules','script','rows','commit','save-chart','save-rule','delete-rule']);
 export async function POST(request:NextRequest,{params}:{params:Promise<{datasetId:string}>}){
   try{
     requireSameOrigin(request);
@@ -19,6 +19,13 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{dataset
     if(!ACTIONS.has(action))return NextResponse.json({error:'Invalid action'},{status:400});
     if(body.versionId!==current.id)throw new Error('STALE_VERSION');
     const csv=await downloadCSV(current.publicId,current.csvHash);
+    if(action==='decision-question')return NextResponse.json(await processDataset(action,csv,{question:body.question}));
+    if(action==='decision'){
+      const original=versions.find(version=>version.parentVersionId===null);
+      if(!original)throw new Error('Original dataset version not found');
+      const originalCsv=original.id===current.id?csv:await downloadCSV(original.publicId,original.csvHash);
+      return NextResponse.json(await processDataset('decision',csv,{originalCsv,operations:current.operations,spec:body.spec}));
+    }
     if(action==='save-chart'){
       const spec=body.spec;
       if(!spec || typeof spec !== 'object'||Array.isArray(spec)||JSON.stringify(spec).length>5000)throw new Error('Invalid chart spec');
@@ -81,7 +88,7 @@ export async function POST(request:NextRequest,{params}:{params:Promise<{dataset
     const original=action==='script'||action==='replay'?versions.find(version=>version.operations.length===0):undefined;
     if((action==='script'||action==='replay')&&!original)throw new Error('Original dataset version not found');
     const sourceCsv=original?await downloadCSV(original.publicId,original.csvHash):csv;
-    const result=await processDataset(action as ProcessorAction,sourceCsv,{goal:dataset.goal,operations,rules,spec:body.spec,newCsv:body.newCsv});
+    const result=await processDataset(action as ProcessorAction,sourceCsv,{goal:dataset.goal,operations,rules,spec:body.spec,newCsv:body.newCsv,rowIds:body.rowIds,offset:body.offset,limit:body.limit});
     return NextResponse.json(result);
   }catch(error){return apiError(error);}
 }

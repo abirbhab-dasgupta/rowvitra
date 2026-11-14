@@ -1,4 +1,4 @@
-export type ProcessorAction='profile'|'suggest'|'preview'|'chart'|'rules'|'script'|'rows'|'chart-advisor'|'replay'|'impact-chart';
+export type ProcessorAction='decision-question'|'decision'|'profile'|'suggest'|'preview'|'chart'|'rules'|'script'|'rows'|'chart-advisor'|'replay'|'impact-chart';
 export class ProcessorError extends Error{
   status:number;
   constructor(message:string,status:number){super(message);this.status=status}

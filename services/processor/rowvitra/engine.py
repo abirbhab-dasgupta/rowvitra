@@ -141,7 +141,7 @@ def _safe_column(frame: pd.DataFrame, col: str | None, allow_protected: bool = F
     return col
 
 
-def apply_operations(frame: pd.DataFrame, operations: list[dict[str, Any]], max_operations: int = 30) -> pd.DataFrame:
+def apply_operations(frame: pd.DataFrame, operations: list[dict[str, Any]], max_operations: int = 30, *, keep_index: bool = False) -> pd.DataFrame:
     if len(operations) > max_operations:
         kind = "batch" if max_operations == 30 else "recipe"
         raise DataError(f"A {kind} may contain no more than {max_operations} operations")
@@ -217,7 +217,7 @@ def apply_operations(frame: pd.DataFrame, operations: list[dict[str, Any]], max_
             out = out.rename(columns={col: target})
         else:
             raise DataError(f"Unsupported operation '{name}'")
-    return out.reset_index(drop=True)
+    return out if keep_index else out.reset_index(drop=True)
 
 
 def diff_tables(before: pd.DataFrame, after: pd.DataFrame, limit: int = 150) -> dict[str, Any]:
