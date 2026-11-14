@@ -3,7 +3,7 @@ import os
 from typing import Any
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
-from .engine import DataError, parse_csv, get_profile, preview, chart_query, check_rules, generate_script, verify_export_script, get_rows, replay_recipe, suggest_repairs
+from .engine import DataError, MAX_RECIPE_OPERATIONS, parse_csv, get_profile, preview, chart_query, check_rules, generate_script, verify_export_script, get_rows, replay_recipe, suggest_repairs
 from .ai import plan, recommend_chart
 
 app = FastAPI(title="Rowvitra Processor", version="1.0.0", docs_url=None if os.getenv("VERCEL") else "/docs")
@@ -19,6 +19,10 @@ class OperationsRequest(CSVRequest):
 class ImpactRequest(OperationsRequest):
     spec: dict[str,Any]
 
+class RecipeRequest(CSVRequest):
+    operations: list[dict[str, Any]] = Field(default_factory=list, max_length=MAX_RECIPE_OPERATIONS)
+    rules: list[dict[str, Any]] = Field(default_factory=list, max_length=50)
+
 class ChartRequest(CSVRequest):
     spec: dict[str, Any]
 
@@ -29,7 +33,7 @@ class RowsRequest(CSVRequest):
 
 class ReplayRequest(CSVRequest):
     newCsv: str = Field(max_length=1_500_000)
-    operations: list[dict[str,Any]] = Field(default_factory=list,max_length=30)
+    operations: list[dict[str,Any]] = Field(default_factory=list,max_length=MAX_RECIPE_OPERATIONS)
 
 class RulesRequest(CSVRequest):
     rules: list[dict[str, Any]]
@@ -94,10 +98,10 @@ def replay(body: ReplayRequest):
     except DataError as exc: raise HTTPException(422,detail=str(exc))
 
 @app.post("/v1/script", dependencies=[Depends(authenticated)])
-def script(body: OperationsRequest):
+def script(body: RecipeRequest):
     try:
         # Only valid, safe plans get export scripts.
-        preview(parse_csv(body.csv), body.operations, body.rules)
+        preview(parse_csv(body.csv), body.operations, body.rules, max_operations=MAX_RECIPE_OPERATIONS)
         script_text, verified = verify_export_script(body.csv, body.operations)
         return {"script":script_text, "replayVerified":verified}
     except (DataError, TypeError, ValueError) as exc: raise HTTPException(422, detail=str(exc))

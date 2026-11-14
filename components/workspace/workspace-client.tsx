@@ -54,7 +54,8 @@ export function WorkspaceClient({datasetId,demo=false}:{datasetId?:string;demo?:
  async function chartImpact(){if(!operations.length)return;await runAction('impact-chart',{operations,rules,spec:chartSpec},d=>{setImpactBefore(d.before);setImpactAfter(d.after);});}
  async function commitBatch(){if(!repairPreview||!operations.length)return;setBusy('commit');setError('');try{
    if(demo){const id=`demo-${versions.length+1}`;setSnapshots(p=>({...p,[id]:repairPreview.csv}));setVersions(p=>[{id,createdAt:new Date().toISOString(),parentVersionId:versionId,operations:[...allOps,...operations,{operation:'checkpoint'}]},...p]);setVersionId(id);setAllOps(prev=>[...prev,...operations,{operation:'checkpoint'}]);setCSV(repairPreview.csv);}else{
-     const d=await call('commit',{operations,rules});setVersionId(d.versionId);setAllOps(d.operations);setCSV(d.csv);setVersions(p=>[{id:d.versionId,createdAt:new Date().toISOString(),parentVersionId:versionId,operations:d.operations},...p]);
+     if(!repairPreview.approvalToken)throw new Error('Run the preview again before committing.');
+     const d=await call('commit',{operations,rules,approvalToken:repairPreview.approvalToken});setVersionId(d.versionId);setAllOps(d.operations);setCSV(d.csv);setVersions(p=>[{id:d.versionId,createdAt:new Date().toISOString(),parentVersionId:versionId,operations:d.operations},...p]);
    }
    setOperations([]);setRepairPreview(null);setImpactBefore(null);setImpactAfter(null);setNotice('Changes committed as a new dataset version.');setSection('overview');setChart(null);
  }catch(e){setError(e instanceof Error?e.message:'Commit failed')}finally{setBusy('')}}

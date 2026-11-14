@@ -2,8 +2,8 @@ import {NextRequest,NextResponse} from 'next/server';
 import {desc,eq} from 'drizzle-orm';
 import {db} from '@/db';
 import {datasets,datasetVersions} from '@/db/schema';
-import {requireUser,apiError} from '@/lib/dataset-access';
-import {uploadCSV,csvHash} from '@/lib/storage';
+import {requireUser,requireSameOrigin,apiError} from '@/lib/dataset-access';
+import {uploadCSV,deleteCSV,csvHash} from '@/lib/storage';
 import {processDataset} from '@/lib/processor';
 export const runtime='nodejs';
 export async function GET(){
@@ -15,6 +15,7 @@ export async function GET(){
 }
 export async function POST(request:NextRequest){
   try{
+    requireSameOrigin(request);
     const user=await requireUser();
     const form=await request.formData();
     const file=form.get('file');
@@ -26,12 +27,18 @@ export async function POST(request:NextRequest){
     // Validate the raw file before storing it. Processing must succeed.
     await processDataset('profile',csv,{goal});
     const publicId=await uploadCSV(csv);
-    const saved=await db.transaction(async(tx)=>{
-      const [dataset]=await tx.insert(datasets).values({userId:user.id,name:file.name.slice(0,120),goal}).returning();
-      const [version]=await tx.insert(datasetVersions).values({datasetId:dataset.id,publicId,csvHash:csvHash(csv),operations:[]}).returning();
-      await tx.update(datasets).set({currentVersionId:version.id}).where(eq(datasets.id,dataset.id));
-      return dataset;
-    });
+    let saved;
+    try{
+      saved=await db.transaction(async(tx)=>{
+        const [dataset]=await tx.insert(datasets).values({userId:user.id,name:file.name.slice(0,120),goal}).returning();
+        const [version]=await tx.insert(datasetVersions).values({datasetId:dataset.id,publicId,csvHash:csvHash(csv),operations:[]}).returning();
+        await tx.update(datasets).set({currentVersionId:version.id}).where(eq(datasets.id,dataset.id));
+        return dataset;
+      });
+    }catch(error){
+      await deleteCSV(publicId).catch(()=>console.error('Orphan CSV cleanup failed after upload'));
+      throw error;
+    }
     return NextResponse.json({id:saved.id},{status:201});
   }catch(error){return apiError(error);}
 }

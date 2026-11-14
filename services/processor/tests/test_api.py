@@ -54,3 +54,16 @@ def test_impact_chart_before_after():
     assert len(r.json()['before']['points'])==2
     assert len(r.json()['after']['points'])==1
     assert r.json()['after']['points'][0]['y']==80
+
+def test_invalid_nested_chart_filter_returns_422():
+    r=client.post('/v1/chart',headers=HEADERS,json={'csv':CSV,'spec':{'type':'bar','x':'region','filters':[None]}})
+    assert r.status_code==422
+
+def test_cumulative_recipe_over_one_batch_exports_and_replays():
+    operations=[{'operation':'trim','column':'region'} for _ in range(30)]+[{'operation':'checkpoint'}]
+    script=client.post('/v1/script',headers=HEADERS,json={'csv':CSV,'operations':operations})
+    assert script.status_code==200 and script.json()['replayVerified'] is True
+    replay=client.post('/v1/replay',headers=HEADERS,json={'csv':CSV,'newCsv':CSV,'operations':operations})
+    assert replay.status_code==200 and replay.json()['canPreview'] is True
+    batch=client.post('/v1/preview',headers=HEADERS,json={'csv':CSV,'operations':operations})
+    assert batch.status_code==422

@@ -18,6 +18,12 @@ export async function uploadCSV(csv:string):Promise<string>{
     stream.end(Buffer.from(csv,'utf8'));
   });
 }
+export async function deleteCSV(publicId:string):Promise<void>{
+  setup();
+  if(!/^rowvitra\/datasets\/[a-f0-9-]{36}\.csv$/.test(publicId))throw new Error('Invalid storage identifier');
+  const result=await cloudinary.uploader.destroy(publicId,{resource_type:'raw',type:'authenticated'});
+  if(result.result!=='ok'&&result.result!=='not found')throw new Error('Orphan CSV cleanup failed');
+}
 export async function downloadCSV(publicId:string, expectedHash?:string):Promise<string>{
   setup();
   if(!/^rowvitra\/datasets\/[a-f0-9-]{36}\.csv$/.test(publicId))throw new Error('Invalid storage identifier');

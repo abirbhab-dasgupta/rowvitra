@@ -99,6 +99,49 @@ def test_chart_filters_and_lineage():
     with pytest.raises(DataError):
         chart_query(f,{"type":"bar","x":"region","filters":[{"column":"sales","operator":"execute","value":"250"}]})
 
+def test_malformed_chart_filter_is_rejected():
+    with pytest.raises(DataError, match="filter"):
+        chart_query(parse_csv(SAMPLE), {"type":"bar","x":"region","filters":[None]})
+
+def test_chart_title_and_filter_value_are_bounded():
+    frame = parse_csv(SAMPLE)
+    with pytest.raises(DataError, match="title"):
+        chart_query(frame, {"type":"bar","x":"region","title":{"unsafe":"object"}})
+    with pytest.raises(DataError, match="filter"):
+        chart_query(frame, {"type":"bar","x":"region","filters":[{"column":"region","value":"x"*201}]})
+
+def test_nonfinite_and_reversed_range_rules_are_rejected():
+    frame = parse_csv(SAMPLE)
+    for minimum, maximum in [(float("nan"), 10), (20, 10), (0, float("inf"))]:
+        with pytest.raises(DataError, match="range"):
+            check_rules(frame, [{"type":"range","column":"sales","min":minimum,"max":maximum}])
+
+def test_rule_limit_cannot_silently_skip_a_rule():
+    frame = parse_csv(SAMPLE)
+    rules = [{"type":"not_null","column":"region"} for _ in range(50)]
+    rules.append({"type":"not_null","column":"missing_column"})
+    with pytest.raises(DataError, match="50 rules"):
+        check_rules(frame, rules)
+
+def test_allowed_values_rule_is_bounded():
+    with pytest.raises(DataError, match="allowed_values"):
+        check_rules(parse_csv(SAMPLE), [{"type":"allowed_values","column":"region","values":["x"]*101}])
+
+def test_missing_persisted_rule_column_blocks_preview():
+    result = preview(parse_csv(SAMPLE), [{"operation":"trim","column":"region"}], [{"type":"not_null","column":"missing_column"}])
+    assert result["valid"] is False
+
+def test_preview_rejects_output_larger_than_storage_read_limit():
+    with pytest.raises(DataError, match="Processed CSV exceeds"):
+        preview(parse_csv("id,note\n001,short\n"), [{"operation":"edit_cell","column":"note","parameters":{"rowId":"1","value":"x"*1_500_001}}])
+
+def test_invalid_pagination_is_rejected():
+    from rowvitra.engine import get_rows
+    frame = parse_csv(SAMPLE)
+    for offset, limit in [(-1, 100), (0, 0), (0, 201), (10001, 1)]:
+        with pytest.raises(DataError, match="pagination"):
+            get_rows(frame, offset=offset, limit=limit)
+
 def test_existing_rule_violations_are_retained_not_blocking():
     p=preview(parse_csv(SAMPLE),[{"operation":"normalize_category","column":"region"}],[{"type":"not_null","column":"age"}])
     assert p["valid"] is True and p["rules"][0]["count"] == 2

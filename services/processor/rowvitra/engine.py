@@ -15,6 +15,7 @@ import pandas as pd
 MAX_ROWS = 10000
 MAX_COLUMNS = 100
 MAX_BYTES = 1_500_000
+MAX_RECIPE_OPERATIONS = 300
 MISSING = {"", "null", "none", "nan", "n/a", "na", "-", "unknown"}
 IDENTIFIER_RE = re.compile(r"(^id$|_id$|\bid\b|zip|postal|pin.?code|phone|mobile|account.?number|sku|product.?code|order.?code|invoice.?number)", re.I)
 NUMERIC_RE = re.compile(r"price|revenue|sales|amount|quantity|qty|age|cost|total|salary|profit|units|score", re.I)
@@ -140,9 +141,10 @@ def _safe_column(frame: pd.DataFrame, col: str | None, allow_protected: bool = F
     return col
 
 
-def apply_operations(frame: pd.DataFrame, operations: list[dict[str, Any]]) -> pd.DataFrame:
-    if len(operations) > 30:
-        raise DataError("A batch may contain no more than 30 operations")
+def apply_operations(frame: pd.DataFrame, operations: list[dict[str, Any]], max_operations: int = 30) -> pd.DataFrame:
+    if len(operations) > max_operations:
+        kind = "batch" if max_operations == 30 else "recipe"
+        raise DataError(f"A {kind} may contain no more than {max_operations} operations")
     out = frame.copy(deep=True)
     for step in operations:
         name = step.get("operation")
@@ -251,8 +253,10 @@ def metrics(frame: pd.DataFrame) -> dict[str, Any]:
 
 
 def check_rules(frame: pd.DataFrame, rules: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if len(rules) > 50:
+        raise DataError("A dataset may contain no more than 50 rules")
     violations = []
-    for rule in rules[:50]:
+    for rule in rules:
         kind = rule.get("type"); col = rule.get("column")
         if col not in frame.columns or col == "__rv_row_id":
             violations.append({"rule": rule, "passed": False, "count": len(frame), "message": "Missing column"}); continue
@@ -261,10 +265,18 @@ def check_rules(frame: pd.DataFrame, rules: list[dict[str, Any]]) -> list[dict[s
         elif kind == "unique": mask = s.duplicated(keep=False)
         elif kind == "range":
             nums = _numeric(s); lo = rule.get("min"); hi = rule.get("max")
-            mask = nums.isna() | (nums < float(lo) if lo is not None else False) | (nums > float(hi) if hi is not None else False)
+            try:
+                minimum = float(lo) if lo is not None else None
+                maximum = float(hi) if hi is not None else None
+            except (TypeError, ValueError) as exc:
+                raise DataError("Invalid range rule") from exc
+            if (minimum is not None and not math.isfinite(minimum)) or (maximum is not None and not math.isfinite(maximum)) or (minimum is not None and maximum is not None and minimum > maximum):
+                raise DataError("Invalid range rule")
+            mask = nums.isna() | (nums < minimum if minimum is not None else False) | (nums > maximum if maximum is not None else False)
         elif kind == "allowed_values":
             allowed = rule.get("values", [])
-            if not isinstance(allowed, list): raise DataError("allowed_values needs a list")
+            if not isinstance(allowed, list) or len(allowed) > 100 or any(not isinstance(value, (str, int, float, bool)) or len(str(value)) > 200 for value in allowed):
+                raise DataError("Invalid allowed_values rule")
             mask = ~s.isin([str(v) for v in allowed])
         else: raise DataError(f"Unknown rule type: {kind}")
         count = int(mask.sum())
@@ -272,8 +284,11 @@ def check_rules(frame: pd.DataFrame, rules: list[dict[str, Any]]) -> list[dict[s
     return violations
 
 
-def preview(frame: pd.DataFrame, operations: list[dict[str, Any]], rules: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    after = apply_operations(frame, operations)
+def preview(frame: pd.DataFrame, operations: list[dict[str, Any]], rules: list[dict[str, Any]] | None = None, max_operations: int = 30) -> dict[str, Any]:
+    after = apply_operations(frame, operations, max_operations)
+    result_csv = as_csv(after)
+    if len(result_csv.encode("utf-8")) > MAX_BYTES:
+        raise DataError("Processed CSV exceeds the 1.5 MB processing limit")
     protected = protected_columns(frame)
     # Protect identifier values from bulk edits and preserve their formatting.
     before_ids = frame.set_index("__rv_row_id")
@@ -289,11 +304,14 @@ def preview(frame: pd.DataFrame, operations: list[dict[str, Any]], rules: list[d
     before_metrics = metrics(frame); after_metrics = metrics(after)
     checks = check_rules(after, rules or [])
     baseline = check_rules(frame, rules or [])
-    no_new_violations = all(new["count"] <= old["count"] for old,new in zip(baseline,checks))
-    return {"csv": as_csv(after), "diff": diff_tables(frame, after), "before": before_metrics, "after": after_metrics, "rules": checks, "protectedColumns": protected, "valid": no_new_violations, "previewRows": after.head(50).to_dict(orient="records")}
+    no_new_violations = all(new["count"] <= old["count"] and not new.get("message") for old,new in zip(baseline,checks))
+    return {"csv": result_csv, "diff": diff_tables(frame, after), "before": before_metrics, "after": after_metrics, "rules": checks, "protectedColumns": protected, "valid": no_new_violations, "previewRows": after.head(50).to_dict(orient="records")}
 
 
 def chart_query(frame: pd.DataFrame, spec: dict[str, Any]) -> dict[str, Any]:
+    title = spec.get("title")
+    if title is not None and (not isinstance(title, str) or len(title) > 120):
+        raise DataError("Invalid chart title")
     kind = spec.get("type", "bar")
     if kind not in {"bar", "line", "pie", "scatter", "histogram", "box", "heatmap", "map"}:
         raise DataError("Unsupported chart type")
@@ -307,9 +325,11 @@ def chart_query(frame: pd.DataFrame, spec: dict[str, Any]) -> dict[str, Any]:
     filters = spec.get("filters", []) or []
     if not isinstance(filters,list) or len(filters)>5: raise DataError("No more than five chart filters")
     for fil in filters:
+        if not isinstance(fil, dict): raise DataError("Invalid chart filter")
         field = fil.get("column")
         operator = fil.get("operator","equals")
         value = str(fil.get("value", ""))
+        if len(value) > 200: raise DataError("Invalid chart filter value")
         if field not in frame.columns or field == "__rv_row_id": raise DataError("Unknown filter column")
         if operator == "equals": mask = frame[field].astype(str) == value
         elif operator == "contains": mask = frame[field].astype(str).str.contains(value,regex=False,case=False,na=False)
@@ -374,17 +394,19 @@ def generate_script(operations: list[dict[str, Any]]) -> str:
 
 
 def get_rows(frame: pd.DataFrame, row_ids: list[str] | None = None, offset: int = 0, limit: int = 100) -> dict[str, Any]:
+    if not 0 <= offset <= MAX_ROWS or not 1 <= limit <= 200:
+        raise DataError("Invalid row pagination")
     if row_ids is not None:
         if len(row_ids) > 300: raise DataError("Too many row IDs")
         selected = frame[frame["__rv_row_id"].isin([str(i) for i in row_ids])]
     else: selected = frame
-    return {"rows": selected.iloc[max(0,offset):max(0,offset)+min(200,max(1,limit))].to_dict(orient="records"), "total": len(selected), "columns": [c for c in frame.columns if c != "__rv_row_id"]}
+    return {"rows": selected.iloc[offset:offset+limit].to_dict(orient="records"), "total": len(selected), "columns": [c for c in frame.columns if c != "__rv_row_id"]}
 
 def verify_export_script(original_csv: str, operations: list[dict[str,Any]]) -> tuple[str,bool]:
     import subprocess, tempfile, sys
     from pathlib import Path
     script = generate_script(operations)
-    expected = preview(parse_csv(original_csv), operations)["csv"]
+    expected = preview(parse_csv(original_csv), operations, max_operations=MAX_RECIPE_OPERATIONS)["csv"]
     with tempfile.TemporaryDirectory(prefix="rowvitra-") as folder:
         p = Path(folder)
         (p/"original.csv").write_text(original_csv, encoding="utf-8")
@@ -426,7 +448,7 @@ def replay_recipe(reference_csv: str, incoming_csv: str, operations: list[dict[s
     if any("needs missing column" in w for w in warnings):
         return {"canPreview":False,"warnings":warnings,"preview":None}
     try:
-        result = preview(incoming,operations)
+        result = preview(incoming,operations,max_operations=MAX_RECIPE_OPERATIONS)
         return {"canPreview":True,"warnings":warnings,"preview":result}
     except DataError as exc:
         return {"canPreview":False,"warnings":warnings+["Recipe stopped: "+str(exc)],"preview":None}
